@@ -4,45 +4,45 @@ if(process.argv.length != 5){
 	process.exit(1);
 }
 
-/*Japanese / English 
- * 設定ここから/  You can edit from here.
- * 前提として/Preparation bufore using this code.
- * ・web3 1.0がインストールされていること(npm install web3)/ Need to finish instal web3 1.0(npm install web3)
- * ・ethereumjs-txがインストールされていること(npm install ethereumjs-tx)/ Need to finish thereumjs-tx(npm install ethereumjs-tx)
- * ・INFURAを使用できること / Require INFURA
+/*Japanese / English / Chinese／
+ * 設定ここから/  You can edit from here.／设定从这里开始
+ * 前提として/Preparation bufore using this code.／前提
+ * ・web3 1.0がインストールされていること(npm install web3)/ Need to finish instal web3 1.0(npm install web3)／必须安装・web3 1.0(npm install web3)
+ * ・ethereumjs-txがインストールされていること(npm install ethereumjs-tx)/ Need to finish thereumjs-tx(npm install ethereumjs-tx)／・必须安装ethereumjs-tx(npm install ethereumjs-tx)
+ * ・INFURAを使用できること / Require INFURA／需要使用INFURA
  */
 
-//ビルドされたコントラクトのJSONの場所/Path of json file of Contract after finished to build.
+//ビルドされたコントラクトのJSONの場所/Path of json file of Contract after finished to build.／JSON构建合同的位置
 var contractJSON = '../contract directory/build/contracts/contract.json';
-//コントラクトアドレス/Contract address
+//コントラクトアドレス/Contract address／合约地址
 var contractAddress = 'your contract address.';
 
-//送金数(例の場合33Token)/ Amount of token for sending
+//送金数(例の場合10Token)/ Amount of token for sending／汇款数量（例如10Token）
 var amount = 10;
-//ガス料金（Gwei）/ Gas price(Gwei)
+//ガス料金（Gwei）/ Gas price(Gwei)／瓦斯费 (Gwei)
 var gasPrice = 2;
-//ガスリミット/Gas limit
+//ガスリミット/Gas limit／瓦斯上限
 var gasLimit = 6100500;
-//web3プロバイダ/web3 provider
+//web3プロバイダ/web3 provider／web3 provider
 var web3Provider = 'https://mainnet.infura.io/<your api key>';
 //chainId(mainnet = 0x1,ropsten = 0x3)
 var chainId = "0x1";
 /*
- * 設定ここまで/You can edit above. No need to edit at bellow.
+ * 設定ここまで/You can edit above. No need to edit at bellow.／设定到此为止
  */
 
 
-//送金元アドレス(トークンとガス分のETHが有ること)/ the address for sending token with ETH(gas)
+//送金元アドレス(トークンとガス分のETHが有ること)/ the address for sending token with ETH(gas)／汇款来源地址（包含Token和gas）
 var fromAddress = process.argv[3];
-//送金元のプライベートキー/Private key of fromAddress
+//送金元のプライベートキー/Private key of fromAddress／汇款来源私钥
 var privKey = process.argv[4];
 
 
 var fs = require('fs');
-//送金先アドレス群
+//送金先アドレス群/List of address for sending.／汇款群地址
 var toAddressesFile = process.argv[2];
 var toAddresses = [];
-//ファイル存在確認
+//ファイル存在確認/Check availability of file.／确认文件的存在
 try {
 	fs.statSync(toAddressesFile);
 } catch(err){
