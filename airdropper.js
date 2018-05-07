@@ -17,12 +17,12 @@ var contractJSON = '../contract directory/build/contracts/contract.json';
 //コントラクトアドレス/Contract address／合约地址
 var contractAddress = 'your contract address.';
 
-//送金数(例の場合10Token)/ Amount of token for sending／汇款数量（例如10Token）
+//既定の送金数(例の場合10Token)/ Default amount of token for sending／汇款数量（例如10Token）
 var amount = 10;
 //ガス料金（Gwei）/ Gas price(Gwei)／瓦斯费 (Gwei)
 var gasPrice = 2;
 //ガスリミット/Gas limit／瓦斯上限
-var gasLimit = 6100500;
+var gasLimit = 100000;
 //web3プロバイダ/web3 provider／web3 provider
 var web3Provider = 'https://mainnet.infura.io/<your api key>';
 //chainId(mainnet = 0x1,ropsten = 0x3)
@@ -73,22 +73,28 @@ function send_wait(wait){
 		}, wait * 1000);
 	});
 }
-async function transfer(address){
+async function transfer(record){
+	var _balance = await web3.eth.getBalance(fromAddress);
+	if(_balance < ((gasPrice*1e9) * gasLimit)){
+		return new Promise(resolve => {
+			resolve('Returned error: low ETH of from address.');
+		});		
+	}
 	var _balance = await contract.methods.balanceOf(fromAddress).call();
-	if(_balance < (amount * 1e18)){
+	if(_balance < (record.amount * 1e18)){
 		return new Promise(resolve => {
 			resolve('Returned error: low balance of from address.');
 		});
 	}
-	_balance = await contract.methods.balanceOf(address).call();
+	_balance = await contract.methods.balanceOf(record.address).call();
 	var a = _balance;
-	if(_balance >= amount * 1e18){
+	if(_balance >= record.amount * 1e18){
 		return new Promise(resolve => {
 			resolve('Returned error: Already have token.Balance Of token:' + (_balance/1e18).toFixed(3));
 		});
 	}
 	
-	const data = contract.methods.transfer(address, amount * 1e18).encodeABI();
+	const data = contract.methods.transfer(record.address, record.amount * 1e18).encodeABI();
 	const nonce = await web3.eth.getTransactionCount(fromAddress);
 	const nonceHex = web3.utils.toHex(nonce);
 	const gasPriceHex = web3.utils.toHex(gasPrice * 1e9);
@@ -127,7 +133,17 @@ function readFile(){
 		var readline = require('readline');
 		var rl = readline.createInterface(rs, {});
 		rl.on('line', function(line){
-			toAddresses.push(line.trim());
+			var columns = line.split(',');
+			if(columns.length == 1){
+				columns[1] = amount;
+			}
+			if(!columns[1]){
+				columns[1] = amount;
+			}
+			toAddresses.push({
+				address: columns[0].trim(),
+				amount: parseFloat(columns[1])
+			});
 		});
 		rl.on('close', function(){
 			resolve(toAddresses);
@@ -138,7 +154,7 @@ async function main(){
 	var resultWait;
 	var toAddresses = await readFile();
 	for(var i = 0;i < toAddresses.length; i++){
-		if(web3.utils.isAddress(toAddresses[i])){
+		if(web3.utils.isAddress(toAddresses[i].address)){
 			var result = await transfer(toAddresses[i]);
 			if(!result.match(/Returned error\:/)){
 				console.log({success: true, address: toAddresses[i], hash: result});
