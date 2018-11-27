@@ -160,17 +160,20 @@ function writeFile(toAddress){
 		var data = toAddress.address + "," + toAddress.amount + "," + toAddress.success + "," + toAddress.hash + "\r\n";
 
 		fs.writeFile(toAddressesFile + '.success.csv', data , function (err) {
-		    console.log(err);
-		    resolve(false);
+		    if(err){
+		    	console.log(err);
+		    	resolve(false);
+		    } else {
+		    	resolve(true);
+		    }
 		});
-		resolve(true);
 	});
 }
 
 async function main(){
 	fs.unlink(toAddressesFile + '.success.csv', function (err) {
 		if (err) {
-			throw err;
+//			throw err;
 		}
 	});
 	var resultWait;
@@ -183,7 +186,7 @@ async function main(){
 				toAddresses[i].success = 1;
 				toAddresses[i].hash = result;
 				writeFile(toAddresses[i]);
-				resultWait = await send_wait(10);
+				resultWait = await send_wait(1);
 			} else {
 				if(result.match(/low balance/)){
 					console.log({success: false, address: toAddresses[i], message: result});
@@ -206,11 +209,12 @@ async function main(){
 				}
 			}
 			if(i % 5 == 0 && i > 0){
-				resultWait = await send_wait(60);
+				resultWait = await send_wait(10);
 			}
 		} else {
 			console.log('Is not address:' + toAddresses[i]);
 		}
 	}
+	console.log('FINISH!');
 }
 main();
