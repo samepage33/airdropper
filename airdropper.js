@@ -20,7 +20,7 @@ var contractAddress = 'your contract address.';
 //既定の送金数(例の場合10Token)/ Default amount of token for sending／汇款数量（例如10Token）
 var amount = 10;
 //ガス料金（Gwei）/ Gas price(Gwei)／瓦斯费 (Gwei)
-var gasPrice = 2;
+var gasPrice = 5;
 //ガスリミット/Gas limit／瓦斯上限
 var gasLimit = 100000;
 //web3プロバイダ/web3 provider／web3 provider
@@ -86,6 +86,7 @@ async function transfer(record){
 			resolve('Returned error: low balance of from address.');
 		});
 	}
+/*
 	_balance = await contract.methods.balanceOf(record.address).call();
 	var a = _balance;
 	if(_balance >= record.amount * 1e18){
@@ -93,10 +94,11 @@ async function transfer(record){
 			resolve('Returned error: Already have token.Balance Of token:' + (_balance/1e18).toFixed(3));
 		});
 	}
+*/
 	
-	const data = contract.methods.transfer(record.address, record.amount * 1e18).encodeABI();
+	const data = contract.methods.transfer(record.address, web3.utils.toHex(record.amount * 1e18)).encodeABI();
 	const nonce = await web3.eth.getTransactionCount(fromAddress);
-	const nonceHex = web3.utils.toHex(nonce);
+	const nonceHex = '0x' + nonce.toString(16);//web3.utils.toHex(nonce);
 	const gasPriceHex = web3.utils.toHex(gasPrice * 1e9);
 	const gasLimitHex = web3.utils.toHex(gasLimit);
 
@@ -142,7 +144,9 @@ function readFile(){
 			}
 			toAddresses.push({
 				address: columns[0].trim(),
-				amount: parseFloat(columns[1])
+				amount: parseFloat(columns[1]),
+				success: 0,
+				hash: null
 			});
 		});
 		rl.on('close', function(){
@@ -150,7 +154,26 @@ function readFile(){
 		});
 	});
 }
+
+function writeFile(toAddress){
+	return new Promise(resolve => {
+		var data = toAddress.address + "," + toAddress.amount + "," + toAddress.success + "," + toAddress.hash + "\r\n";
+		}
+		
+		fs.writeFile(toAddressesFile + '.success.csv', data , function (err) {
+		    console.log(err);
+		    resolve(false);
+		});
+		resolve(true);
+	});
+}
+
 async function main(){
+	fs.unlink(toAddressesFile + '.success.csv', function (err) {
+		if (err) {
+			throw err;
+		}
+	});
 	var resultWait;
 	var toAddresses = await readFile();
 	for(var i = 0;i < toAddresses.length; i++){
@@ -158,6 +181,9 @@ async function main(){
 			var result = await transfer(toAddresses[i]);
 			if(!result.match(/Returned error\:/)){
 				console.log({success: true, address: toAddresses[i], hash: result});
+				toAddresses[i].success = 1;
+				toAddresses[i].hash = result;
+				writeFile(toAddresses[i]);
 				resultWait = await send_wait(10);
 			} else {
 				if(result.match(/low balance/)){
@@ -181,7 +207,7 @@ async function main(){
 				}
 			}
 			if(i % 5 == 0 && i > 0){
-				resultWait = await send_wait(1200);
+				resultWait = await send_wait(60);
 			}
 		} else {
 			console.log('Is not address:' + toAddresses[i]);
