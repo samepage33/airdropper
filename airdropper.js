@@ -158,8 +158,7 @@ function readFile(){
 function writeFile(toAddress){
 	return new Promise(resolve => {
 		var data = toAddress.address + "," + toAddress.amount + "," + toAddress.success + "," + toAddress.hash + "\r\n";
-		}
-		
+
 		fs.writeFile(toAddressesFile + '.success.csv', data , function (err) {
 		    console.log(err);
 		    resolve(false);
